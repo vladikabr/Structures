@@ -2,86 +2,108 @@
 
 using namespace std;
 
-struct Node {
 
-    Node(int key) {
-        k = key;
+template <class NodeType>
+class BNS {
+public:
+    struct Node {
+
+        Node(NodeType k) {
+            key = k;
+        }
+
+        Node* parent = nullptr;
+        Node* left = nullptr;
+        Node* right = nullptr;
+        NodeType key;
+    };
+
+    BNS(): root(nullptr) {};
+
+    BNS(NodeType* root_): root(new Node(root_)), size(1) {};
+
+    BNS(initializer_list<NodeType> lst) {
+        for (auto nod : lst) {
+            insert(new Node(nod));
+            size++;
+        }
     }
-    Node* p = nullptr;
-    Node* l = nullptr;
-    Node* r = nullptr;
-    int k = 0;
+
+    Node* insert(Node* v) {
+        Node* prev = nullptr;
+        Node* cur = root;
+        while (cur != nullptr) {
+            prev = cur;
+            if (v->key < cur->key)
+                cur = cur->left;
+            else if (v->key > cur->key)
+                cur = cur->right;
+            else
+                return nullptr;
+        }
+        v->parent = prev;
+        if (prev == nullptr)
+            root = v;
+        else {
+            if (v->key < prev->key)
+                prev->left = v;
+            else
+                prev->right = v;
+        }
+        return v;
+    }
+
+    void delet(NodeType x) {
+        Node* v = new Node(x);
+        if (v->left == nullptr && v->right == nullptr) {
+            if (v->key < v->parent->key)
+                v->parent->left = nullptr;
+            else
+                v->parent->right = nullptr;
+            delete(v);
+            return;
+        }
+        if (v->left == nullptr) {
+            if (v->key < v->parent->key)
+                v->parent->left = v->right;
+            else
+                v->parent->right = v->right;
+            v->right->parent = v->parent;
+            delete(v);
+            return;
+        }
+        if (v->right == nullptr) {
+            if (v->key < v->parent->key)
+                v->parent->left = v->left;
+            else
+                v->parent->right = v->left;
+            v->left->parent = v->parent;
+            delete(v);
+            return;
+        }
+        Node* u = v->right;
+        while (u->left)
+            u = u->left;
+        if (u->key < u->parent->key)
+            u->parent->left = u->right;
+        else
+            u->parent->right = u->right;
+        if (u->right)
+            u->right->parent = u->parent;
+        v->key = u->key;
+    }
+
+private:
+    Node* root;
+    size_t size = 0;
 };
-
-Node* root;
-
-Node* insert(Node* v) {
-    Node* prev = nullptr;
-    Node* cur = root;
-    while (cur != nullptr) {
-        prev = cur;
-        if (v->k < cur->k)
-            cur = cur->l;
-        else if (v->k > cur->k)
-            cur = cur->r;
-        else
-            return nullptr;
-    }
-    v->p = prev;
-    if (prev == nullptr)
-        root = v;
-    else {
-        if (v->k < prev->k)
-            prev->l = v;
-        else
-            prev->r = v;
-    }
-    return v;
-}
-
-void delet(Node* v) {
-    if (v->l == nullptr && v->r == nullptr) {
-        if (v->k < v->p->k)
-            v->p->l = nullptr;
-        else
-            v->p->r = nullptr;
-        delete(v);
-        return;
-    }
-    if (v->l == nullptr) {
-        if (v->k < v->p->k)
-            v->p->l = v->r;
-        else
-            v->p->r = v->r;
-        v->r->p = v->p;
-        delete(v);
-        return;
-    }
-    if (v->r == nullptr) {
-        if (v->k < v->p->k)
-            v->p->l = v->l;
-        else
-            v->p->r = v->l;
-        v->l->p = v->p;
-        delete(v);
-        return;
-    }
-    Node* u = v->r;
-    while (u->l)
-        u = u->l;
-    if (u->k < u->p->k)
-        u->p->l = u->r;
-    else
-        u->p->r = u->r;
-    if (u->r)
-        u->r->p = u->p;
-    v->k = u->k;
-}
-
 
 
 
 int main() {
+
+    BNS<int> tr{3, 2, 1, 4};
+    tr.delet(2);
 
 
     return 0;
