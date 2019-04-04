@@ -1,7 +1,4 @@
-#include <iostream>
-
-using namespace std;
-
+#include <initializer_list>
 
 template <class KeyType>
 class BNS {
@@ -22,7 +19,7 @@ public:
 
     BNS(KeyType* root_): root(new Node(root_)), size(1) {};
 
-    BNS(initializer_list<KeyType> lst) {
+    BNS(std::initializer_list<KeyType> lst) {
         for (auto nod : lst) {
             insert(new Node(nod));
             size++;
@@ -97,16 +94,3 @@ private:
     Node* root;
     size_t size = 0;
 };
-
-
-
-int main() {
-
-    BNS<int> tr{3, 2, 1, 4};
-    tr.delet(2);
-
-
-    return 0;
-}
-
-
