@@ -18,7 +18,7 @@ public:
 
     BNS(): root(nullptr) {};
 
-    BNS(KeyType* root_): root(new Node(root_)), size(1) {};
+    BNS(KeyType root_): root(new Node(root_)), size(1) {};
 
     BNS(std::initializer_list<KeyType> lst) {
         for (auto nod : lst) {
@@ -92,11 +92,21 @@ public:
         v->key = u->key;
     }
 
+    Node* GetRoot() {
+        return root;
+    }
+
 private:
     Node* root;
     size_t size = 0;
 };
 
 int main() {
+
+    BNS<int> t(10);
+    t.insert(4);
+    auto x = t.GetRoot();
+    std::cout << x->key;
+
     
 }
