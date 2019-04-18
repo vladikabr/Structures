@@ -18,12 +18,12 @@ public:
 
     BNS(): root(nullptr) {};
 
-    BNS(KeyType root_): root(new Node(root_)), size(1) {};
+    BNS(KeyType root_): root(new Node(root_)), number_of_elements(1) {};
 
     BNS(std::initializer_list<KeyType> lst) {
         for (auto nod : lst) {
             insert(new Node(nod));
-            size++;
+            number_of_elements++;
         }
     }
 
@@ -52,8 +52,25 @@ public:
         return v;
     }
 
-    void delet(KeyType x) {
-        Node* v = new Node(x);
+    Node* GetKey(KeyType key) const {
+        Node* res = root;
+        while (res != nullptr) {
+            if (key == res->key) {
+                return res;
+            }
+            if (key < res->key) {
+                res = res->left;
+            } else {
+                res = res->right;
+            }
+        }
+        return res;
+    }
+
+    void erase(KeyType x) {
+        Node* v = GetKey(x);
+        if (v == nullptr)
+            return;
         if (v->left == nullptr && v->right == nullptr) {
             if (v->key < v->parent->key)
                 v->parent->left = nullptr;
@@ -92,21 +109,29 @@ public:
         v->key = u->key;
     }
 
-    Node* GetRoot() {
+    Node* GetRoot() const {
         return root;
+    }
+
+    size_t size() const {
+        return number_of_elements;
     }
 
 private:
     Node* root;
-    size_t size = 0;
+    size_t number_of_elements = 0;
 };
 
 int main() {
 
     BNS<int> t(10);
-    t.insert(4);
-    auto x = t.GetRoot();
-    std::cout << x->key;
+    t.insert(15);
+    t.insert(5);
+    t.insert(20);
+    t.erase(5);
+    if (t.GetKey(5))
+        std::cout << "True";
+
 
     
 }
