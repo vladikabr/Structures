@@ -2,52 +2,62 @@
 #include <initializer_list>
 
 template <class KeyType>
-class BNS {
+class BST {
 public:
     struct Node {
 
         Node(KeyType k) {
             key = k;
+            elements_count = 0;
+            number_of_keys = 1;
         }
 
         Node* parent = nullptr;
         Node* left = nullptr;
         Node* right = nullptr;
         KeyType key;
+        size_t elements_count = 0;
+        size_t number_of_keys = 0;
     };
 
-    BNS(): root(nullptr) {};
+    BST(): root(nullptr) {};
 
-    BNS(KeyType root_): root(new Node(root_)), number_of_elements(1) {};
+    BST(KeyType root_): root(new Node(root_)), number_of_all_elements(1) {};
 
-    BNS(std::initializer_list<KeyType> lst) {
+    BST(std::initializer_list<KeyType> lst) {
         for (auto nod : lst) {
             insert(new Node(nod));
-            number_of_elements++;
         }
     }
 
     Node* insert(KeyType key) {
+        number_of_all_elements++;
         Node* v = new Node(key);
         Node* prev = nullptr;
         Node* cur = root;
         while (cur != nullptr) {
             prev = cur;
-            if (v->key < cur->key)
+            if (v->key < cur->key) {
+                cur->elements_count++;
                 cur = cur->left;
-            else if (v->key > cur->key)
+            } else if (v->key > cur->key) {
+                cur->elements_count++;
                 cur = cur->right;
-            else
-                return nullptr;
+            } else {
+                cur->number_of_keys++;
+                return cur;
+            }
         }
+        number_of_unique_elements++;
         v->parent = prev;
-        if (prev == nullptr)
+        if (prev == nullptr) {
             root = v;
-        else {
-            if (v->key < prev->key)
+        } else {
+            if (v->key < prev->key) {
                 prev->left = v;
-            else
+            } else {
                 prev->right = v;
+            }
         }
         return v;
     }
@@ -67,46 +77,22 @@ public:
         return res;
     }
 
-    void erase(KeyType x) {
-        Node* v = GetKey(x);
+    size_t CountElements(const Node* v) const {
         if (v == nullptr)
-            return;
-        if (v->left == nullptr && v->right == nullptr) {
-            if (v->key < v->parent->key)
-                v->parent->left = nullptr;
-            else
-                v->parent->right = nullptr;
-            delete(v);
-            return;
+            return 0;
+        return v->elements_count + v->number_of_keys;
+    }
+
+    size_t CountLess(const KeyType k, const Node* v) const {
+        if (v == nullptr) 
+            return 0;
+        if (k < v->key) {
+            return CountLess(k, v->left);
+        } else if (k > v->key) {
+            return CountElements(v->left) + CountLess(k, v->right) + v->number_of_keys;
+        } else {
+            return CountElements(v->left);
         }
-        if (v->left == nullptr) {
-            if (v->key < v->parent->key)
-                v->parent->left = v->right;
-            else
-                v->parent->right = v->right;
-            v->right->parent = v->parent;
-            delete(v);
-            return;
-        }
-        if (v->right == nullptr) {
-            if (v->key < v->parent->key)
-                v->parent->left = v->left;
-            else
-                v->parent->right = v->left;
-            v->left->parent = v->parent;
-            delete(v);
-            return;
-        }
-        Node* u = v->right;
-        while (u->left)
-            u = u->left;
-        if (u->key < u->parent->key)
-            u->parent->left = u->right;
-        else
-            u->parent->right = u->right;
-        if (u->right)
-            u->right->parent = u->parent;
-        v->key = u->key;
     }
 
     Node* GetRoot() const {
@@ -114,24 +100,19 @@ public:
     }
 
     size_t size() const {
-        return number_of_elements;
+        return number_of_all_elements;
+    }
+
+    size_t NumberOfUnique() const {
+        return number_of_unique_elements;
     }
 
 private:
     Node* root;
-    size_t number_of_elements = 0;
+    size_t number_of_all_elements = 0;
+    size_t number_of_unique_elements = 0;
 };
 
 int main() {
-
-    BNS<int> t(10);
-    t.insert(15);
-    t.insert(5);
-    t.insert(20);
-    t.erase(5);
-    if (t.GetKey(5))
-        std::cout << "True";
-
-
     
 }
