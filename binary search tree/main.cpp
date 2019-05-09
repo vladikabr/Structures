@@ -6,23 +6,19 @@ class BST {
 public:
     struct Node {
 
-        Node(KeyType k) {
-            key = k;
-            elements_count = 0;
-            number_of_keys = 1;
-        }
+        Node(const KeyType k): key(k), elements_count(0), number_of_keys(1) {}
 
         Node* parent = nullptr;
         Node* left = nullptr;
         Node* right = nullptr;
-        KeyType key;
+        const KeyType key;
         size_t elements_count = 0;
         size_t number_of_keys = 0;
     };
 
     BST(): root(nullptr) {};
 
-    BST(KeyType root_): root(new Node(root_)), number_of_all_elements(1) {};
+    BST(const KeyType root_): root(new Node(root_)), number_of_all_elements(1) {};
 
     BST(std::initializer_list<KeyType> lst) {
         for (auto nod : lst) {
