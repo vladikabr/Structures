@@ -4,6 +4,18 @@
 template<typename KeyType>
 class Set {
 public:
+
+    class iterator {
+    public: 
+        iterator (): it(nullptr), isEnd(true) {}
+
+        
+
+    private:
+        Node* it;
+        bool isEnd;
+    };
+
     Set (): root(nullptr) {}
 
     template<typename Iter>
@@ -54,12 +66,13 @@ public:
 private:
     struct Node {
 
-        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr) {} 
+        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
         size_t height;
         const KeyType key;
         Node* left;
         Node* right;
+        Node* parent;
     };
 
     size_t height(Node* p) const {
@@ -77,10 +90,23 @@ private:
         p->height = (hl > hr ? hl : hr) + 1;
     }
 
+    void fix_parent(Node* p) {
+        if (p == nullptr)
+            return;
+        if (p->left)
+            p->left->parent = p;
+        if (p->right)
+            p->right->parent = p;
+        if (p == root) 
+            p->parent = nullptr;
+    }
+
     Node* rotate_right(Node* p) {
         Node* q = p->left;
         p->left = q->right;
         q->right = p;
+        fix_parent(p);
+        fix_parent(q);
         fix_height(p);
         fix_height(q);
         return q;
@@ -90,6 +116,8 @@ private:
         Node* p = q->right;
         q->right = p->left;
         p->left = q;
+        fix_parent(p);
+        fix_parent(q);
         fix_height(q);
         fix_height(p);
         return p;
@@ -98,13 +126,17 @@ private:
     Node* balance(Node* p) {
         fix_height(p);
         if (bfactor(p) == 2) {
-            if (bfactor(p->right) < 0)
+            if (bfactor(p->right) < 0) {
                 p->right = rotate_right(p->right);
+                fix_parent(p);
+            }
             return rotate_left(p);
         }
         if (bfactor(p) == -2) {
-            if (bfactor(p->left) > 0)
+            if (bfactor(p->left) > 0) {
                 p->left = rotate_left(p->left);
+                fix_parent(p);
+            }
             return rotate_right(p);
         }
         return p;
@@ -117,8 +149,9 @@ private:
         }
         if (k < p->key)
             p->left = make_insert(p->left, k);
-        else if (p->key < k)
+        else if (p->key < k) 
             p->right = make_insert(p->right, k);
+        fix_parent(p);
         return balance(p);
     }
 
@@ -130,6 +163,7 @@ private:
         if (p->left == nullptr)
             return p->right;
         p->left = remove_min(p->left);
+        fix_parent(p);
         return balance(p);
     }
 
@@ -144,14 +178,17 @@ private:
             sz--;
             Node* q = p->left;
             Node* r = p->right;
-            delete p;
             if (!r) 
                 return q;
             Node* min = find_min(r);
             min->right = remove_min(r);
             min->left = q;
+            fix_parent(min);
+            fix_parent(p->parent);
+            delete p;
             return balance(min);
         }
+        fix_parent(p);
         return balance(p);
     }
 
@@ -161,6 +198,7 @@ private:
         auto res = new Node(p->key);
         res->left = make_copy(p->left);
         res->right = make_copy(p->right);
+        fix_parent(res);
         return res;
     }
 
@@ -181,15 +219,21 @@ private:
     size_t sz;
 };
 
-
 int main() {
-    Set<int> a({1,2,3,4,5,6,7,8,9});
-    std::cout << a.empty() << "\n";
-    Set<int> b = a;
-    std::cout << b.size() << "\n";
-    for (int i = 1; i < 10; i++)
-        b.erase(i);
-    std::cout << a.size() << "\n";
-    std::cout << b.empty() << "\n";
-    
+    Set<int> s{1,2,3,4,5,6,7,8,9,10};
+    std::cout << s.size() << " ";
+    s.erase(1);
+    s.erase(4);
+    s.erase(10);
+    s.erase(7);
+    s.insert(1);
+    s.insert(5);
+    s.insert(2);
+
+    s.insert(2);
+    s.erase(2);
+    s.erase(4);
+    s.erase(3);
+    s.erase(7);
+    std::cout << s.size();
 }
