@@ -1,19 +1,50 @@
-#include <iostream>
-
+#include <initializer_list>
 
 template<typename KeyType>
 class Set {
 public:
 
+    struct Node {
+
+        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
+
+        size_t height;
+        const KeyType key;
+        Node* left;
+        Node* right;
+        Node* parent;
+    };
+
     class iterator {
     public: 
-        iterator (): it(nullptr), isEnd(true) {}
+        iterator (): it(nullptr), index(0) {}
 
+        iterator (size_t ind, Set &s): tree(s), index(0) {
+            it = tree.find_min(tree.GetRoot());
+            while (index != ind)
+                it++;
+        }
+        
+        iterator operator++(int) {
+            if (++index == tree.size())
+                it = nullptr;
+            else {
+                if (it->right != nullptr)
+                    it = tree.find_min(it->right);
+                else {
+                    while (it->parent->right == it)
+                        it = it->parent;
+                    it = it->parent;
+                }
+            }
+            return *this;
+        }
         
 
     private:
+        Set& tree;
         Node* it;
-        bool isEnd;
+        size_t index;
     };
 
     Set (): root(nullptr) {}
@@ -58,23 +89,13 @@ public:
         root = make_erase(root, k);
     }
 
-    KeyType rt() {
-        return root->key;
+    iterator begin() {
+        return iterator(0, *this);
     }
 
     
 private:
-    struct Node {
-
-        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
-
-        size_t height;
-        const KeyType key;
-        Node* left;
-        Node* right;
-        Node* parent;
-    };
-
+    
     size_t height(Node* p) const {
 	    return p ? p->height : 0;
     }
@@ -220,20 +241,5 @@ private:
 };
 
 int main() {
-    Set<int> s{1,2,3,4,5,6,7,8,9,10};
-    std::cout << s.size() << " ";
-    s.erase(1);
-    s.erase(4);
-    s.erase(10);
-    s.erase(7);
-    s.insert(1);
-    s.insert(5);
-    s.insert(2);
 
-    s.insert(2);
-    s.erase(2);
-    s.erase(4);
-    s.erase(3);
-    s.erase(7);
-    std::cout << s.size();
 }
