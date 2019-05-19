@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <iostream>
 
 template<typename KeyType>
 class Set {
@@ -6,9 +7,10 @@ public:
 
     struct Node {
 
-        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
+        Node (const KeyType k): height(1), rank(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
         size_t height;
+        size_t rank;
         const KeyType key;
         Node* left;
         Node* right;
@@ -22,11 +24,11 @@ public:
         iterator (size_t ind, Set &s): tree(s), index(0) {
             it = tree.find_min(tree.GetRoot());
             while (index != ind)
-                it++;
+                (*this)++;
         }
         
         iterator operator++(int) {
-            if (++index == tree.size())
+            if (index + 1 == tree.size())
                 it = nullptr;
             else {
                 if (it->right != nullptr)
@@ -37,14 +39,57 @@ public:
                     it = it->parent;
                 }
             }
+            index++;
             return *this;
         }
-        
 
+        iterator operator--(int) {
+            if (index == 0)
+                it = nullptr;
+            else if (index == tree.size()) {
+                it = tree.GetRoot();
+                while (it->right)
+                    it = it->right;
+                index--;
+            } else {
+                if (it->left) {
+                    it = it->left;
+                    while (it->right)
+                        it = it->right;
+                } else {
+                    while (it->parent->left == it)
+                        it = it->parent;
+                    it = it->parent;
+                }
+                index--;
+            }
+            return *this;
+        }
+
+        const KeyType operator*() const {
+            if (it == nullptr) 
+                return 0;
+            return it->key;
+        }
+
+        // const KeyType operator->() const {
+        //     if (it == nullptr) 
+        //         return 0;
+        //     return it->key;
+        // }
+
+        bool operator==(const iterator &other) const {
+            return it == other.it && index == other.index;
+        }
+
+        bool operator!=(const iterator &other) const {
+            return !(*this == other);
+        }
+        
     private:
         Set& tree;
         Node* it;
-        size_t index;
+        int index;
     };
 
     Set (): root(nullptr) {}
@@ -93,6 +138,10 @@ public:
         return iterator(0, *this);
     }
 
+    iterator end() {
+        return iterator(size(), *this);
+    }
+
     
 private:
     
@@ -100,15 +149,21 @@ private:
 	    return p ? p->height : 0;
     }
 
+    size_t rank(Node* p) const {
+        return p ? p->rank : 0;
+    }
+
     int bfactor(Node* p) const {
         return height(p->right) - height(p->left);
     }
 
-    void fix_height(Node* p) {
+    void fix_height_rank(Node* p) {
         auto hl = height(p->left);
         auto hr = height(p->right);
-        // p->height = std::max(hl, hr) + 1;
+        auto rl = rank(p->left);
+        auto rr = rank(p->right);
         p->height = (hl > hr ? hl : hr) + 1;
+        p->rank = rl + rr + 1;
     }
 
     void fix_parent(Node* p) {
@@ -128,8 +183,8 @@ private:
         q->right = p;
         fix_parent(p);
         fix_parent(q);
-        fix_height(p);
-        fix_height(q);
+        fix_height_rank(p);
+        fix_height_rank(q);
         return q;
     }
 
@@ -139,13 +194,13 @@ private:
         p->left = q;
         fix_parent(p);
         fix_parent(q);
-        fix_height(q);
-        fix_height(p);
+        fix_height_rank(q);
+        fix_height_rank(p);
         return p;
     }
 
     Node* balance(Node* p) {
-        fix_height(p);
+        fix_height_rank(p);
         if (bfactor(p) == 2) {
             if (bfactor(p->right) < 0) {
                 p->right = rotate_right(p->right);
@@ -241,5 +296,5 @@ private:
 };
 
 int main() {
-
+     
 }
