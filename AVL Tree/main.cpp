@@ -19,16 +19,12 @@ public:
 
     class iterator {
     public: 
-        iterator (): it(nullptr), index(0) {}
+        iterator (): it(nullptr) {}
 
-        iterator (size_t ind, Set &s): tree(s), index(0) {
-            it = tree.find_min(tree.GetRoot());
-            while (index != ind)
-                (*this)++;
-        }
+        iterator (Node* p, Set &s): tree(s), it(p) {}
         
         iterator operator++(int) {
-            if (index + 1 == tree.size())
+            if (it->key == tree.max())
                 it = nullptr;
             else {
                 if (it->right != nullptr)
@@ -39,19 +35,15 @@ public:
                     it = it->parent;
                 }
             }
-            index++;
             return *this;
         }
 
         iterator operator--(int) {
-            if (index == 0)
+            if (it == nullptr) 
+                it = tree.find_max(tree.GetRoot());
+            else if (it->key == tree.min())
                 it = nullptr;
-            else if (index == tree.size()) {
-                it = tree.GetRoot();
-                while (it->right)
-                    it = it->right;
-                index--;
-            } else {
+            else {
                 if (it->left) {
                     it = it->left;
                     while (it->right)
@@ -61,7 +53,6 @@ public:
                         it = it->parent;
                     it = it->parent;
                 }
-                index--;
             }
             return *this;
         }
@@ -79,7 +70,7 @@ public:
         // }
 
         bool operator==(const iterator &other) const {
-            return it == other.it && index == other.index;
+            return it == other.it;
         }
 
         bool operator!=(const iterator &other) const {
@@ -89,23 +80,22 @@ public:
     private:
         Set& tree;
         Node* it;
-        int index;
     };
 
-    Set (): root(nullptr) {}
+    Set (): root(nullptr), sz(0), mn(0), mx(0) {}
 
     template<typename Iter>
-    Set (const Iter &begin, const Iter &end): root(nullptr), sz(0) {
+    Set (const Iter &begin, const Iter &end): root(nullptr), sz(0), mn(0), mx(0) {
         while (begin++ != end)
             insert(*begin);
     }
 
-    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0) {
+    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0), mn(0), mx(0) {
         for (auto key : list) 
             insert(key);
     }
 
-    Set (const Set &other): root(nullptr), sz(other.size()) {
+    Set (const Set &other): root(nullptr), sz(other.size()), mn(other.min()), mx(other.max()) {
         root = make_copy(other.GetRoot());
     };
 
@@ -116,6 +106,8 @@ public:
     void operator=(const Set &other) {
         root = make_copy(other.GetRoot());
         sz = other.size();
+        mn = other.min();
+        mx = other.max();
     }
 
     size_t size() const {
@@ -128,23 +120,54 @@ public:
 
     void insert(const KeyType k) {
         root = make_insert(root, k);
+        fix_min();
+        fix_max();
     }
 
     void erase(const KeyType k) {
         root = make_erase(root, k);
+        fix_min();
+        fix_max();
+    }
+
+    KeyType min() const {
+        return mn;
+    }
+
+    KeyType max() const {
+        return mx;
     }
 
     iterator begin() {
-        return iterator(0, *this);
+        return iterator(find_min(GetRoot()), *this);
     }
 
     iterator end() {
-        return iterator(size(), *this);
+        return iterator(nullptr, *this);
+    }
+
+    iterator lower_bound(const KeyType k) { // need const !!!
+        return iterator(make_lower_bound(GetRoot(), k), *this);
+    }
+
+    iterator find(const KeyType k) { // need const !!!
+        auto it = lower_bound(k);
+        if (*it == k)
+            return it;
+        return end();
     }
 
     
 private:
-    
+
+    void fix_min() {
+        mn = find_min(GetRoot())->key;
+    }
+
+    void fix_max() {
+        mx = find_max(GetRoot())->key;
+    }
+
     size_t height(Node* p) const {
 	    return p ? p->height : 0;
     }
@@ -235,6 +258,10 @@ private:
 	    return p->left ? find_min(p->left) : p;
     }
 
+    Node* find_max(Node* p) const {
+	    return p->right ? find_max(p->right) : p;
+    }
+
     Node* remove_min(Node* p) {
         if (p->left == nullptr)
             return p->right;
@@ -287,14 +314,57 @@ private:
         }
     }
 
+    Node* make_lower_bound(Node* p, const KeyType k) const {
+        if (p == nullptr)
+            return nullptr;
+        while (p != nullptr && p->key < k) {
+            p = p->right;
+        }
+        if (p == nullptr)
+            return nullptr;
+        Node* s = make_lower_bound(p->left, k);
+        if (s != nullptr)
+            return s;
+        return p;
+    }
+
     Node* GetRoot() const {
         return root;
     }
 
     Node* root;
     size_t sz;
+    KeyType mn;
+    KeyType mx;
 };
 
 int main() {
-     
+    Set<int> s{1,2,3,4,5,6,7,8,9,10};
+    std::cout << s.min() << " " << s.max() << "\n";  
+    s.erase(4);
+    s.erase(5);   
+    std::cout << s.min() << " " << s.max() << "\n";
+    s.insert(11);
+    s.insert(0);  
+    std::cout << s.min() << " " << s.max() << "\n";
+    s.erase(11);
+    s.erase(10);   
+    s.erase(0);
+    s.erase(1);
+    s.erase(2);
+    std::cout << s.min() << " " << s.max() << "\n";
+    auto it = s.begin();
+    while (it != s.end()) {
+        std::cout << *it << " ";
+        it++;
+    }
+    std::cout << "\n";
+    for (int i = 1; i <= 12; i++) {
+        std::cout << i << " - ";
+        auto iter = s.find(i);
+        if (iter == s.end())
+            std::cout << "end\n";
+        else 
+            std::cout << *iter << "\n";
+    }
 }
