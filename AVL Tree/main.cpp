@@ -99,7 +99,7 @@ public:
         root = make_copy(other.GetRoot());
     };
 
-    ~Set () { // do not wor yet :)
+    ~Set () { 
         make_destruction(root);
     }
 
@@ -310,7 +310,6 @@ private:
             make_destruction(p->left);
             make_destruction(p->right);
             delete(p);
-            p = nullptr;
         }
     }
 
@@ -339,32 +338,5 @@ private:
 };
 
 int main() {
-    Set<int> s{1,2,3,4,5,6,7,8,9,10};
-    std::cout << s.min() << " " << s.max() << "\n";  
-    s.erase(4);
-    s.erase(5);   
-    std::cout << s.min() << " " << s.max() << "\n";
-    s.insert(11);
-    s.insert(0);  
-    std::cout << s.min() << " " << s.max() << "\n";
-    s.erase(11);
-    s.erase(10);   
-    s.erase(0);
-    s.erase(1);
-    s.erase(2);
-    std::cout << s.min() << " " << s.max() << "\n";
-    auto it = s.begin();
-    while (it != s.end()) {
-        std::cout << *it << " ";
-        it++;
-    }
-    std::cout << "\n";
-    for (int i = 1; i <= 12; i++) {
-        std::cout << i << " - ";
-        auto iter = s.find(i);
-        if (iter == s.end())
-            std::cout << "end\n";
-        else 
-            std::cout << *iter << "\n";
-    }
+
 }
