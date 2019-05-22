@@ -1,5 +1,6 @@
 #include <initializer_list>
 #include <iostream>
+#include <map>
 
 template<typename KeyType>
 class Set {
@@ -21,7 +22,7 @@ public:
     public: 
         iterator (): it(nullptr) {}
 
-        iterator (Node* p, Set &s): tree(s), it(p) {}
+        iterator (const Node* p, const Set &s): tree(s), it(p) {}
         
         iterator operator++(int) {
             if (it->key == tree.max())
@@ -66,7 +67,7 @@ public:
         // const KeyType operator->() const {
         //     if (it == nullptr) 
         //         return 0;
-        //     return it->key;
+        //     return &(it->key);
         // }
 
         bool operator==(const iterator &other) const {
@@ -76,10 +77,10 @@ public:
         bool operator!=(const iterator &other) const {
             return !(*this == other);
         }
-        
+        KeyType key;
     private:
-        Set& tree;
-        Node* it;
+        const Set& tree;
+        const Node* it;
     };
 
     Set (): root(nullptr), sz(0), mn(0), mx(0) {}
@@ -138,19 +139,19 @@ public:
         return mx;
     }
 
-    iterator begin() {
+    iterator begin() const {
         return iterator(find_min(GetRoot()), *this);
     }
 
-    iterator end() {
+    iterator end() const {
         return iterator(nullptr, *this);
     }
 
-    iterator lower_bound(const KeyType k) { // need const !!!
+    iterator lower_bound(const KeyType k) const {
         return iterator(make_lower_bound(GetRoot(), k), *this);
     }
 
-    iterator find(const KeyType k) { // need const !!!
+    iterator find(const KeyType k) const {
         auto it = lower_bound(k);
         if (*it == k)
             return it;
@@ -338,5 +339,5 @@ private:
 };
 
 int main() {
-
+    
 }
