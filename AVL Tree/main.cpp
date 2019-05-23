@@ -1,6 +1,5 @@
 #include <initializer_list>
 #include <iostream>
-#include <map>
 
 template<typename KeyType>
 class Set {
@@ -10,8 +9,8 @@ public:
 
         Node (const KeyType k): height(1), rank(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
-        size_t height;
-        size_t rank;
+        std::size_t height;
+        std::size_t rank;
         const KeyType key;
         Node* left;
         Node* right;
@@ -20,18 +19,51 @@ public:
 
     class iterator {
     public: 
-        iterator (): it(nullptr) {}
+        iterator (): tree(nullptr), it(nullptr) {}
 
-        iterator (const Node* p, const Set &s): tree(s), it(p) {}
+        iterator (const Node* p, const Set *s): tree(s), it(p) {}
+
+        iterator (const iterator &other): tree(other.tree), it(other.it) {}
+
+        iterator operator=(const iterator &other) {
+            tree = other.tree;
+            it = other.it;
+            return *this;
+        }
         
-        iterator operator++(int) {
-            if (it->key == tree.max())
+        iterator operator++() {
+            if (!(it->key < tree->max() || tree->max() < it->key))
                 it = nullptr;
             else {
                 if (it->right != nullptr)
-                    it = tree.find_min(it->right);
+                    it = tree->find_min(it->right);
                 else {
-                    while (it->parent->right == it)
+                    while (it->parent != nullptr && it->parent->right == it)
+                        it = it->parent;
+                    it = it->parent;
+                }
+            }
+            return *this;
+        }
+
+        iterator operator++(int) {
+            auto old = *this;
+            ++(*this);
+            return old;
+        }
+
+        iterator operator--() {
+            if (it == nullptr) 
+                it = tree->find_max(tree->GetRoot());
+            else if (it->key == tree->min())
+                it = nullptr;
+            else {
+                if (it->left) {
+                    it = it->left;
+                    while (it->right)
+                        it = it->right;
+                } else {
+                    while (it->parent != nullptr && it->parent->left == it)
                         it = it->parent;
                     it = it->parent;
                 }
@@ -40,35 +72,22 @@ public:
         }
 
         iterator operator--(int) {
-            if (it == nullptr) 
-                it = tree.find_max(tree.GetRoot());
-            else if (it->key == tree.min())
-                it = nullptr;
-            else {
-                if (it->left) {
-                    it = it->left;
-                    while (it->right)
-                        it = it->right;
-                } else {
-                    while (it->parent->left == it)
-                        it = it->parent;
-                    it = it->parent;
-                }
-            }
-            return *this;
+            auto old = *this;
+            --(*this);
+            return old;
         }
 
         const KeyType operator*() const {
             if (it == nullptr) 
-                return 0;
+                return KeyType();
             return it->key;
         }
 
-        // const KeyType operator->() const {
-        //     if (it == nullptr) 
-        //         return 0;
-        //     return &(it->key);
-        // }
+        const KeyType* operator->() const {
+            if (it == nullptr) 
+                return new KeyType();
+            return &(it->key);
+        }
 
         bool operator==(const iterator &other) const {
             return it == other.it;
@@ -79,19 +98,26 @@ public:
         }
         KeyType key;
     private:
-        const Set& tree;
+        const Set* tree;
         const Node* it;
     };
 
-    Set (): root(nullptr), sz(0), mn(0), mx(0) {}
+    Set (): root(nullptr), sz(0) {}
 
     template<typename Iter>
-    Set (const Iter &begin, const Iter &end): root(nullptr), sz(0), mn(0), mx(0) {
+    Set (const Iter &begin, const Iter &end): root(nullptr), sz(0) {
         while (begin++ != end)
             insert(*begin);
     }
 
-    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0), mn(0), mx(0) {
+    Set (const KeyType *begin, const KeyType *end): root(nullptr), sz(0) {
+        while (begin != end) {
+            insert(*begin);
+            begin++;
+        }
+    }
+
+    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0) {
         for (auto key : list) 
             insert(key);
     }
@@ -104,14 +130,15 @@ public:
         make_destruction(root);
     }
 
-    void operator=(const Set &other) {
+    Set<KeyType> operator=(const Set &other) {
         root = make_copy(other.GetRoot());
         sz = other.size();
         mn = other.min();
         mx = other.max();
+        return *this;
     }
 
-    size_t size() const {
+    std::size_t size() const {
         return sz;
     }
 
@@ -121,12 +148,14 @@ public:
 
     void insert(const KeyType k) {
         root = make_insert(root, k);
+        fix_parent(root);
         fix_min();
         fix_max();
     }
 
     void erase(const KeyType k) {
         root = make_erase(root, k);
+        fix_parent(root);
         fix_min();
         fix_max();
     }
@@ -140,20 +169,20 @@ public:
     }
 
     iterator begin() const {
-        return iterator(find_min(GetRoot()), *this);
+        return iterator(find_min(GetRoot()), this);
     }
 
     iterator end() const {
-        return iterator(nullptr, *this);
+        return iterator(nullptr, this);
     }
 
     iterator lower_bound(const KeyType k) const {
-        return iterator(make_lower_bound(GetRoot(), k), *this);
+        return iterator(make_lower_bound(GetRoot(), k), this);
     }
 
     iterator find(const KeyType k) const {
         auto it = lower_bound(k);
-        if (*it == k)
+        if (!(*it < k || k < *it))
             return it;
         return end();
     }
@@ -169,11 +198,11 @@ private:
         mx = find_max(GetRoot())->key;
     }
 
-    size_t height(Node* p) const {
+    std::size_t height(Node* p) const {
 	    return p ? p->height : 0;
     }
 
-    size_t rank(Node* p) const {
+    std::size_t rank(Node* p) const {
         return p ? p->rank : 0;
     }
 
@@ -256,10 +285,14 @@ private:
     }
 
     Node* find_min(Node* p) const {
+        if (p == nullptr)
+            return nullptr;
 	    return p->left ? find_min(p->left) : p;
     }
 
     Node* find_max(Node* p) const {
+        if (p == nullptr)
+            return nullptr;
 	    return p->right ? find_max(p->right) : p;
     }
 
@@ -333,11 +366,13 @@ private:
     }
 
     Node* root;
-    size_t sz;
+    std::size_t sz;
     KeyType mn;
     KeyType mx;
 };
 
 int main() {
-    
+    Set<int> s1;
+    Set<int> s2;
+    Set<int>::iterator it;
 }
