@@ -25,7 +25,7 @@ public:
 
         iterator (const iterator &other): tree(other.tree), it(other.it) {}
 
-        iterator operator=(const iterator &other) {
+        iterator& operator=(const iterator other) {
             tree = other.tree;
             it = other.it;
             return *this;
@@ -92,13 +92,13 @@ public:
         }
 
         bool operator==(const iterator &other) const {
-            return it == other.it;
+            return it == other.it && tree == other.tree;
         }
 
         bool operator!=(const iterator &other) const {
             return !(*this == other);
         }
-        KeyType key;
+
     private:
         const Set* tree;
         const Node* it;
@@ -184,7 +184,7 @@ public:
 
     iterator find(const KeyType k) const {
         auto it = lower_bound(k);
-        if (!(*it < k || k < *it))
+        if (it != end() && !(*it < k || k < *it))
             return it;
         return end();
     }
@@ -374,8 +374,8 @@ private:
 };
 
 int main() {
-    Set<int> s1{1,2,3,4,5};
-    auto it = s1.end();
-    it++;
+    Set<int> s1{1,2};
+    auto it1 = s1.lower_bound(0);
+    auto it2 = it1;
     
 }
