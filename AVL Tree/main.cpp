@@ -32,9 +32,9 @@ public:
         }
         
         iterator operator++() {
-            if (it == nullptr)
+            if (it == nullptr || tree == nullptr || tree->empty())
                 return *this;
-            if (!(it->key < tree->max() || tree->max() < it->key))
+            if (!(it->key < tree->max()->key || tree->max()->key < it->key))
                 it = nullptr;
             else {
                 if (it->right != nullptr)
@@ -57,7 +57,7 @@ public:
         iterator operator--() {
             if (it == nullptr) 
                 it = tree->find_max(tree->GetRoot());
-            else if (!(it->key < tree->min() || tree->min() < it->key))
+            else if (!(it->key < tree->min()->key || tree->min()->key < it->key))
                 it = nullptr;
             else {
                 if (it->left) {
@@ -80,14 +80,14 @@ public:
         }
 
         const KeyType operator*() const {
-            if (it == nullptr) 
-                return KeyType();
+            // if (it == nullptr) 
+            //     return KeyType();
             return it->key;
         }
 
         const KeyType* operator->() const {
-            if (it == nullptr) 
-                return new KeyType();
+            // if (it == nullptr) 
+            //     return new KeyType();
             return &(it->key);
         }
 
@@ -162,11 +162,11 @@ public:
         fix_max();
     }
 
-    KeyType min() const {
+    Node* min() const {
         return mn;
     }
 
-    KeyType max() const {
+    Node* max() const {
         return mx;
     }
 
@@ -193,11 +193,11 @@ public:
 private:
 
     void fix_min() {
-        mn = find_min(GetRoot())->key;
+        mn = find_min(GetRoot());
     }
 
     void fix_max() {
-        mx = find_max(GetRoot())->key;
+        mx = find_max(GetRoot());
     }
 
     std::size_t height(Node* p) const {
@@ -213,12 +213,14 @@ private:
     }
 
     void fix_height_rank(Node* p) {
-        auto hl = height(p->left);
-        auto hr = height(p->right);
-        auto rl = rank(p->left);
-        auto rr = rank(p->right);
-        p->height = (hl > hr ? hl : hr) + 1;
-        p->rank = rl + rr + 1;
+        if (p != nullptr) {
+            auto hl = height(p->left);
+            auto hr = height(p->right);
+            auto rl = rank(p->left);
+            auto rr = rank(p->right);
+            p->height = (hl > hr ? hl : hr) + 1;
+            p->rank = rl + rr + 1;
+        }
     }
 
     void fix_parent(Node* p) {
@@ -369,13 +371,16 @@ private:
 
     Node* root;
     std::size_t sz;
-    KeyType mn;
-    KeyType mx;
+    Node* mn;
+    Node* mx;
 };
 
 int main() {
-    Set<int> s1{1,2};
-    auto it1 = s1.lower_bound(0);
-    auto it2 = it1;
+    Set<int> s;
+    auto it = s.begin();
+    it++;
+    it--;
+
     
+    s.empty();
 }
