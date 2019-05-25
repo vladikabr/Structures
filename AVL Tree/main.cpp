@@ -32,6 +32,8 @@ public:
         }
         
         iterator operator++() {
+            if (it == nullptr)
+                return *this;
             if (!(it->key < tree->max() || tree->max() < it->key))
                 it = nullptr;
             else {
@@ -55,7 +57,7 @@ public:
         iterator operator--() {
             if (it == nullptr) 
                 it = tree->find_max(tree->GetRoot());
-            else if (it->key == tree->min())
+            else if (!(it->key < tree->min() || tree->min() < it->key))
                 it = nullptr;
             else {
                 if (it->left) {
@@ -372,7 +374,8 @@ private:
 };
 
 int main() {
-    Set<int> s1;
-    Set<int> s2;
-    Set<int>::iterator it;
+    Set<int> s1{1,2,3,4,5};
+    auto it = s1.end();
+    it++;
+    
 }
