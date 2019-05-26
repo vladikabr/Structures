@@ -7,10 +7,9 @@ public:
 
     struct Node {
 
-        Node (const KeyType k): height(1), rank(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
+        Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
-        std::size_t height;
-        std::size_t rank;
+        int height;
         const KeyType key;
         Node* left;
         Node* right;
@@ -55,6 +54,8 @@ public:
         }
 
         iterator operator--() {
+            if (tree == nullptr || tree->empty())
+                return *this;
             if (it == nullptr) 
                 it = tree->find_max(tree->GetRoot());
             else if (!(it->key < tree->min()->key || tree->min()->key < it->key))
@@ -104,28 +105,33 @@ public:
         const Node* it;
     };
 
-    Set (): root(nullptr), sz(0) {}
+    Set (): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {}
 
     template<typename Iter>
-    Set (const Iter &begin, const Iter &end): root(nullptr), sz(0) {
-        while (begin++ != end)
-            insert(*begin);
-    }
-
-    Set (const KeyType *begin, const KeyType *end): root(nullptr), sz(0) {
+    Set (Iter begin, Iter end): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {
         while (begin != end) {
             insert(*begin);
             begin++;
         }
     }
 
-    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0) {
+    // Set (const KeyType *begin, const KeyType *end): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {
+    //     while (begin != end) {
+    //         insert(*begin);
+    //         begin++;
+    //     }
+    // }
+
+    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {
         for (auto key : list) 
             insert(key);
     }
 
-    Set (const Set &other): root(nullptr), sz(other.size()), mn(other.min()), mx(other.max()) {
+    Set (const Set &other): root(nullptr), sz(other.size()), mn(nullptr), mx(nullptr) {
         root = make_copy(other.GetRoot());
+        fix_min();
+        fix_max();
+        fix_height(root);
     };
 
     ~Set () { 
@@ -135,8 +141,9 @@ public:
     Set<KeyType> operator=(const Set &other) {
         root = make_copy(other.GetRoot());
         sz = other.size();
-        mn = other.min();
-        mx = other.max();
+        fix_min();
+        fix_max();
+        fix_height(root);
         return *this;
     }
 
@@ -200,26 +207,19 @@ private:
         mx = find_max(GetRoot());
     }
 
-    std::size_t height(Node* p) const {
+    int height(Node* p) const {
 	    return p ? p->height : 0;
-    }
-
-    std::size_t rank(Node* p) const {
-        return p ? p->rank : 0;
     }
 
     int bfactor(Node* p) const {
         return height(p->right) - height(p->left);
     }
 
-    void fix_height_rank(Node* p) {
+    void fix_height(Node* p) {
         if (p != nullptr) {
             auto hl = height(p->left);
             auto hr = height(p->right);
-            auto rl = rank(p->left);
-            auto rr = rank(p->right);
             p->height = (hl > hr ? hl : hr) + 1;
-            p->rank = rl + rr + 1;
         }
     }
 
@@ -240,8 +240,8 @@ private:
         q->right = p;
         fix_parent(p);
         fix_parent(q);
-        fix_height_rank(p);
-        fix_height_rank(q);
+        fix_height(p);
+        fix_height(q);
         return q;
     }
 
@@ -251,17 +251,18 @@ private:
         p->left = q;
         fix_parent(p);
         fix_parent(q);
-        fix_height_rank(q);
-        fix_height_rank(p);
+        fix_height(q);
+        fix_height(p);
         return p;
     }
 
     Node* balance(Node* p) {
-        fix_height_rank(p);
+        fix_height(p);
         if (bfactor(p) == 2) {
             if (bfactor(p->right) < 0) {
                 p->right = rotate_right(p->right);
                 fix_parent(p);
+                fix_height(p);
             }
             return rotate_left(p);
         }
@@ -269,6 +270,7 @@ private:
             if (bfactor(p->left) > 0) {
                 p->left = rotate_left(p->left);
                 fix_parent(p);
+                fix_height(p);
             }
             return rotate_right(p);
         }
@@ -285,6 +287,7 @@ private:
         else if (p->key < k) 
             p->right = make_insert(p->right, k);
         fix_parent(p);
+        fix_height(p);
         return balance(p);
     }
 
@@ -305,6 +308,7 @@ private:
             return p->right;
         p->left = remove_min(p->left);
         fix_parent(p);
+        fix_height(p);
         return balance(p);
     }
 
@@ -325,11 +329,14 @@ private:
             min->right = remove_min(r);
             min->left = q;
             fix_parent(min);
+            fix_height(min);
             fix_parent(p->parent);
+            fix_height(p->parent);
             delete p;
             return balance(min);
         }
         fix_parent(p);
+        fix_height(p);
         return balance(p);
     }
 
@@ -340,6 +347,7 @@ private:
         res->left = make_copy(p->left);
         res->right = make_copy(p->right);
         fix_parent(res);
+        fix_height(res);
         return res;
     }
 
@@ -351,9 +359,7 @@ private:
         }
     }
 
-    Node* make_lower_bound(Node* p, const KeyType k) const {
-        if (p == nullptr)
-            return nullptr;
+    Node* make_lower_bound(Node* p, const KeyType &k) const {
         while (p != nullptr && p->key < k) {
             p = p->right;
         }
@@ -376,11 +382,13 @@ private:
 };
 
 int main() {
-    Set<int> s;
-    auto it = s.begin();
-    it++;
-    it--;
-
-    
-    s.empty();
+    Set<int> s{0};
+    for (int i  = 0; i < 1000000; i++)
+        s.insert(i);
+    for(auto it = s.begin(); it != s.end(); it++)
+        std::cout << *it << " ";
+    std::cout << "\n";
+    while (!s.empty())
+        s.erase(*s.begin());
+    std::cout << s.size();
 }
