@@ -30,9 +30,12 @@ public:
             return *this;
         }
         
-        iterator operator++() {
-            if (it == nullptr || tree == nullptr || tree->empty())
+        iterator& operator++() {
+            if (it == nullptr || tree == nullptr || tree->empty()) {
+                it = nullptr;
+                tree = nullptr;
                 return *this;
+            }
             if (!(it->key < tree->max()->key || tree->max()->key < it->key))
                 it = nullptr;
             else {
@@ -53,18 +56,18 @@ public:
             return old;
         }
 
-        iterator operator--() {
-            if (tree == nullptr || tree->empty())
+        iterator& operator--() {
+            if (tree == nullptr || tree->empty()) {
+                it = nullptr;
                 return *this;
+            }
             if (it == nullptr) 
                 it = tree->find_max(tree->GetRoot());
             else if (!(it->key < tree->min()->key || tree->min()->key < it->key))
                 it = nullptr;
             else {
                 if (it->left) {
-                    it = it->left;
-                    while (it->right)
-                        it = it->right;
+                    it = tree->find_max(it->left);
                 } else {
                     while (it->parent != nullptr && it->parent->left == it)
                         it = it->parent;
@@ -81,14 +84,14 @@ public:
         }
 
         const KeyType operator*() const {
-            // if (it == nullptr) 
-            //     return KeyType();
+            if (it == nullptr) 
+                return KeyType();
             return it->key;
         }
 
         const KeyType* operator->() const {
-            // if (it == nullptr) 
-            //     return new KeyType();
+            if (it == nullptr) 
+                return new KeyType();
             return &(it->key);
         }
 
@@ -382,13 +385,9 @@ private:
 };
 
 int main() {
-    Set<int> s{0};
-    for (int i  = 0; i < 1000000; i++)
-        s.insert(i);
-    for(auto it = s.begin(); it != s.end(); it++)
-        std::cout << *it << " ";
-    std::cout << "\n";
-    while (!s.empty())
-        s.erase(*s.begin());
-    std::cout << s.size();
+    Set<int> s{1,2,3};
+    s = s;
+    for (auto it = s.begin(); it != s.end(); it++)
+        std::cout << *(it);
+
 }
