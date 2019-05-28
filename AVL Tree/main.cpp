@@ -5,8 +5,7 @@ template<typename KeyType>
 class Set {
 public:
 
-    struct Node {
-
+    struct Node { 
         Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
         int height;
@@ -84,14 +83,14 @@ public:
         }
 
         const KeyType operator*() const {
-            if (it == nullptr) 
-                return KeyType();
+            // if (it == nullptr) 
+            //     return KeyType();
             return it->key;
         }
 
         const KeyType* operator->() const {
-            if (it == nullptr) 
-                return new KeyType();
+            // if (it == nullptr) 
+            //     return new KeyType();
             return &(it->key);
         }
 
@@ -335,7 +334,7 @@ private:
             fix_height(min);
             fix_parent(p->parent);
             fix_height(p->parent);
-            delete p;
+            delete(p);
             return balance(min);
         }
         fix_parent(p);
@@ -346,7 +345,7 @@ private:
     Node* make_copy(Node* p) {
         if (!p)
             return nullptr;
-        auto res = new Node(p->key);
+        Node* res = new Node(p->key);
         res->left = make_copy(p->left);
         res->right = make_copy(p->right);
         fix_parent(res);
@@ -356,6 +355,7 @@ private:
 
     void make_destruction(Node* p) {
         if (p != nullptr) {
+            
             make_destruction(p->left);
             make_destruction(p->right);
             delete(p);
@@ -385,9 +385,16 @@ private:
 };
 
 int main() {
-    Set<int> s{1,2,3};
-    s = s;
-    for (auto it = s.begin(); it != s.end(); it++)
-        std::cout << *(it);
-
-}
+    Set<int> s;
+    s.insert(3);
+    s.insert(1);
+    s.insert(0);
+    s.insert(2);
+    s.insert(2);
+    s.insert(13);
+    Set<int> a = s;
+    a.insert(3);
+    a.lower_bound(2);
+    a.lower_bound(4);
+    a.find(0);
+}   
