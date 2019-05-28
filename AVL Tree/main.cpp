@@ -1,6 +1,9 @@
 #include <initializer_list>
 #include <iostream>
 
+
+int cnt = 0;
+
 template<typename KeyType>
 class Set {
 public:
@@ -136,13 +139,15 @@ public:
         fix_height(root);
     };
 
-    ~Set () { 
+    ~Set (void) { 
         make_destruction(root);
     }
 
-    Set<KeyType> operator=(const Set &other) {
-        root = make_copy(other.GetRoot());
+    Set<KeyType>& operator=(const Set &other) {
+        auto duplicate = make_copy(other.GetRoot());
         sz = other.size();
+        make_destruction(root);
+        root = duplicate;
         fix_min();
         fix_max();
         fix_height(root);
@@ -282,6 +287,7 @@ private:
     Node* make_insert(Node* p, KeyType k) {
         if (!p) {
             sz++;
+            cnt++;
             return new Node(k);
         }
         if (k < p->key)
@@ -306,8 +312,9 @@ private:
     }
 
     Node* remove_min(Node* p) {
-        if (p->left == nullptr)
+        if (p->left == nullptr) {
             return p->right;
+        }
         p->left = remove_min(p->left);
         fix_parent(p);
         fix_height(p);
@@ -317,24 +324,28 @@ private:
     Node* make_erase(Node* p, KeyType k) {
         if (!p) 
             return nullptr;
-        if (k < p->key)
+        if (k < p->key) {
             p->left = make_erase(p->left, k);
-        else if (p->key < k)
+        }
+        else if (p->key < k) {
             p->right = make_erase(p->right, k);	
+        }
         else {
             sz--;
             Node* q = p->left;
             Node* r = p->right;
-            if (!r) 
+            if (!r) {
+                delete(p);
+                cnt--;
                 return q;
+            }
             Node* min = find_min(r);
             min->right = remove_min(r);
             min->left = q;
             fix_parent(min);
             fix_height(min);
-            fix_parent(p->parent);
-            fix_height(p->parent);
             delete(p);
+            cnt--;
             return balance(min);
         }
         fix_parent(p);
@@ -346,6 +357,7 @@ private:
         if (!p)
             return nullptr;
         Node* res = new Node(p->key);
+        cnt++;
         res->left = make_copy(p->left);
         res->right = make_copy(p->right);
         fix_parent(res);
@@ -355,9 +367,9 @@ private:
 
     void make_destruction(Node* p) {
         if (p != nullptr) {
-            
             make_destruction(p->left);
             make_destruction(p->right);
+            cnt--;
             delete(p);
         }
     }
@@ -385,16 +397,10 @@ private:
 };
 
 int main() {
-    Set<int> s;
-    s.insert(3);
-    s.insert(1);
-    s.insert(0);
-    s.insert(2);
-    s.insert(2);
-    s.insert(13);
-    Set<int> a = s;
-    a.insert(3);
-    a.lower_bound(2);
-    a.lower_bound(4);
-    a.find(0);
+    if (1) {
+        Set<int> s{2,3};
+        Set<int> t = s;
+        t = s;
+    }
+    std::cout << cnt;
 }   
