@@ -1,3 +1,5 @@
+#pragma once
+
 #include <initializer_list>
 
 template<typename KeyType>
@@ -368,7 +370,3 @@ private:
     Node* mn;
     Node* mx;
 };
-
-int main() {
-    
-}   
