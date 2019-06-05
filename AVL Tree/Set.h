@@ -369,4 +369,5 @@ private:
     std::size_t sz;
     Node* mn;
     Node* mx;
+
 };
