@@ -9,7 +9,7 @@ public:
     struct Node { 
         Node (const KeyType k): height(1), key(k), left(nullptr), right(nullptr), parent(nullptr) {} 
 
-        int height;
+        std::size_t height;
         const KeyType key;
         Node* left;
         Node* right;
@@ -20,7 +20,7 @@ public:
     public: 
         iterator (): tree(nullptr), it(nullptr) {}
 
-        iterator (const Node* p, const Set *s): tree(s), it(p) {}
+        iterator (const Node* node, const Set *s): tree(s), it(p) {}
 
         iterator (const iterator &other): tree(other.tree), it(other.it) {}
 
@@ -36,12 +36,12 @@ public:
                 tree = nullptr;
                 return *this;
             }
-            if (!(it->key < tree->max()->key || tree->max()->key < it->key))
+            if (!(it->key < tree->max()->key || tree->max()->key < it->key)) {
                 it = nullptr;
-            else {
-                if (it->right != nullptr)
+            } else {
+                if (it->right != nullptr) {
                     it = tree->find_min(it->right);
-                else {
+                } else {
                     while (it->parent != nullptr && it->parent->right == it)
                         it = it->parent;
                     it = it->parent;
@@ -61,11 +61,11 @@ public:
                 it = nullptr;
                 return *this;
             }
-            if (it == nullptr) 
+            if (it == nullptr) {
                 it = tree->find_max(tree->GetRoot());
-            else if (!(it->key < tree->min()->key || tree->min()->key < it->key))
+            } else if (!(it->key < tree->min()->key || tree->min()->key < it->key)) {
                 it = nullptr;
-            else {
+            } else {
                 if (it->left) {
                     it = tree->find_max(it->left);
                 } else {
@@ -104,22 +104,22 @@ public:
         const Node* it;
     };
 
-    Set (): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {}
+    Set (): root(nullptr), size(0), min(nullptr), max(nullptr) {}
 
     template<typename Iter>
-    Set (Iter begin, Iter end): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {
+    Set (Iter begin, Iter end): root(nullptr), size(0), min(nullptr), max(nullptr) {
         while (begin != end) {
             insert(*begin);
             begin++;
         }
     }
 
-    Set (const std::initializer_list<KeyType> &list): root(nullptr), sz(0), mn(nullptr), mx(nullptr) {
+    Set (const std::initializer_list<KeyType> &list): root(nullptr), size(0), min(nullptr), max(nullptr) {
         for (auto key : list) 
             insert(key);
     }
 
-    Set (const Set &other): root(nullptr), sz(other.size()), mn(nullptr), mx(nullptr) {
+    Set (const Set &other): root(nullptr), size(other.size()), min(nullptr), max(nullptr) {
         root = make_copy(other.GetRoot());
         fix_min_max();
         fix_height(root);
@@ -130,7 +130,7 @@ public:
     }
 
     Set<KeyType>& operator=(const Set &other) {
-        sz = other.size();
+        size = other.size();
         auto duplicate = make_copy(other.GetRoot());
         make_destruction(root);
         root = duplicate;
@@ -140,7 +140,7 @@ public:
     }
 
     std::size_t size() const {
-        return sz;
+        return size;
     }
 
     bool empty() const {
@@ -160,11 +160,11 @@ public:
     }
 
     Node* min() const {
-        return mn;
+        return min;
     }
 
     Node* max() const {
-        return mx;
+        return max;
     }
 
     iterator begin() const {
@@ -181,8 +181,9 @@ public:
 
     iterator find(const KeyType k) const {
         auto it = lower_bound(k);
-        if (it != end() && !(*it < k || k < *it))
+        if (it != end() && !(*it < k || k < *it)) {
             return it;
+        }
         return end();
     }
 
@@ -190,175 +191,184 @@ public:
 private:
 
     void fix_min_max() {
-        mn = find_min(root);
-        mx = find_max(root);
+        min = find_min(root);
+        max = find_max(root);
     }
 
-    int height(Node* p) const {
-	    return p ? p->height : 0;
+    int height(Node* node) const {
+	    return node ? node->height : 0;
     }
 
-    int bfactor(Node* p) const {
-        return height(p->right) - height(p->left);
+    int bfactor(Node* node) const {
+        return height(node->right) - height(node->left);
     }
 
-    void fix_height(Node* p) {
-        if (p != nullptr) {
-            auto hl = height(p->left);
-            auto hr = height(p->right);
-            p->height = (hl > hr ? hl : hr) + 1;
+    void fix_height(Node* node) {
+        if (node != nullptr) {
+            auto hl = height(node->left);
+            auto hr = height(node->right);
+            node->height = (hl > hr ? hl : hr) + 1;
         }
     }
 
-    void fix_parent(Node* p) {
-        if (p == nullptr)
+    void fix_parent(Node* node) {
+        if (node == nullptr) {
             return;
-        if (p->left)
-            p->left->parent = p;
-        if (p->right)
-            p->right->parent = p;
-        if (p == root) 
-            p->parent = nullptr;
-    }
-
-    Node* rotate_right(Node* p) {
-        Node* q = p->left;
-        p->left = q->right;
-        q->right = p;
-        fix_parent(p);
-        fix_parent(q);
-        fix_height(p);
-        fix_height(q);
-        return q;
-    }
-
-    Node* rotate_left(Node* q) {
-        Node* p = q->right;
-        q->right = p->left;
-        p->left = q;
-        fix_parent(p);
-        fix_parent(q);
-        fix_height(q);
-        fix_height(p);
-        return p;
-    }
-
-    Node* balance(Node* p) {
-        fix_height(p);
-        if (bfactor(p) == 2) {
-            if (bfactor(p->right) < 0) {
-                p->right = rotate_right(p->right);
-                fix_parent(p);
-                fix_height(p);
-            }
-            return rotate_left(p);
         }
-        if (bfactor(p) == -2) {
-            if (bfactor(p->left) > 0) {
-                p->left = rotate_left(p->left);
-                fix_parent(p);
-                fix_height(p);
-            }
-            return rotate_right(p);
+        if (node->left) {
+            node->left->parent = node;
         }
-        return p;
+        if (node->right) {
+            node->right->parent = node;
+        }
+        if (node == root) {
+            node->parent = nullptr; 
+        }
     }
 
-    Node* make_insert(Node* p, KeyType k) {
-        if (!p) {
-            sz++;
+    Node* rotate_right(Node* node) {
+        Node* left_child = node->left;
+        node->left = left_child->right;
+        left_child->right = node;
+        fix_parent(node);
+        fix_parent(left_child);
+        fix_height(node);
+        fix_height(left_child);
+        return left_child;
+    }
+
+    Node* rotate_left(Node* node) {
+        Node* right_child = node->right;
+        node->right = right_child->left;
+        right_child->left = node;
+        fix_parent(right_child);
+        fix_parent(node);
+        fix_height(node);
+        fix_height(right_child);
+        return right_child;
+    }
+
+    Node* balance(Node* node) {
+        fix_height(node);
+        if (bfactor(node) == 2) {
+            if (bfactor(node->right) < 0) {
+                node->right = rotate_right(node->right);
+                fix_parent(node);
+                fix_height(node);
+            }
+            return rotate_left(node);
+        }
+        if (bfactor(node) == -2) {
+            if (bfactor(node->left) > 0) {
+                node->left = rotate_left(node->left);
+                fix_parent(node);
+                fix_height(node);
+            }
+            return rotate_right(node);
+        }
+        return node;
+    }
+
+    Node* make_insert(Node* node, KeyType k) {
+        if (!node) {
+            size++;
             return new Node(k);
         }
-        if (k < p->key)
-            p->left = make_insert(p->left, k);
-        else if (p->key < k) 
-            p->right = make_insert(p->right, k);
-        fix_parent(p);
-        fix_height(p);
-        return balance(p);
-    }
-
-    Node* find_min(Node* p) const {
-        if (p == nullptr)
-            return nullptr;
-	    return p->left ? find_min(p->left) : p;
-    }
-
-    Node* find_max(Node* p) const {
-        if (p == nullptr)
-            return nullptr;
-	    return p->right ? find_max(p->right) : p;
-    }
-
-    Node* remove_min(Node* p) {
-        if (p->left == nullptr) {
-            return p->right;
+        if (k < node->key) {
+            node->left = make_insert(node->left, k);
+        } else if (node->key < k) {
+            node->right = make_insert(node->right, k);
         }
-        p->left = remove_min(p->left);
-        fix_parent(p);
-        fix_height(p);
-        return balance(p);
+        fix_parent(node);
+        fix_height(node);
+        return balance(node);
     }
 
-    Node* make_erase(Node* p, KeyType k) {
-        if (!p) 
+    Node* find_min(Node* node) const {
+        if (node == nullptr) {
             return nullptr;
-        if (k < p->key) {
-            p->left = make_erase(p->left, k);
         }
-        else if (p->key < k) {
-            p->right = make_erase(p->right, k);	
+	    return node->left ? find_min(node->left) : node;
+    }
+
+    Node* find_max(Node* node) const {
+        if (node == nullptr) {
+            return nullptr;
         }
-        else {
-            sz--;
-            Node* q = p->left;
-            Node* r = p->right;
-            if (!r) {
-                delete(p);
-                return q;
+	    return node->right ? find_max(node->right) : node;
+    }
+
+    Node* remove_min(Node* node) {
+        if (node->left == nullptr) {
+            return node->right;
+        }
+        node->left = remove_min(node->left);
+        fix_parent(node);
+        fix_height(node);
+        return balance(node);
+    }
+
+    Node* make_erase(Node* node, KeyType k) {
+        if (!node) {
+            return nullptr;
+        }
+        if (k < node->key) {
+            node->left = make_erase(node->left, k);
+        } else if (node->key < k) {
+            node->right = make_erase(node->right, k);	
+        } else {
+            size--;
+            Node* left_child = node->left;
+            Node* right_child = node->right;
+            if (!right_child) {
+                delete(node);
+                return left_child;
             }
-            Node* min = find_min(r);
-            min->right = remove_min(r);
-            min->left = q;
+            Node* min = find_min(right_child);
+            min->right = remove_min(right_child);
+            min->left = left_child;
             fix_parent(min);
             fix_height(min);
-            delete(p);
+            delete(node);
             return balance(min);
         }
-        fix_parent(p);
-        fix_height(p);
-        return balance(p);
+        fix_parent(node);
+        fix_height(node);
+        return balance(node);
     }
 
-    Node* make_copy(Node* p) {
-        if (!p)
+    Node* make_copy(Node* node) {
+        if (!node) {
             return nullptr;
-        Node* res = new Node(p->key);
-        res->left = make_copy(p->left);
-        res->right = make_copy(p->right);
+        }
+        Node* res = new Node(node->key);
+        res->left = make_copy(node->left);
+        res->right = make_copy(node->right);
         fix_parent(res);
         fix_height(res);
         return res;
     }
 
-    void make_destruction(Node* p) {
-        if (p != nullptr) {
-            make_destruction(p->left);
-            make_destruction(p->right);
-            delete(p);
+    void make_destruction(Node* node) {
+        if (node != nullptr) {
+            make_destruction(node->left);
+            make_destruction(node->right);
+            delete(node);
         }
     }
 
-    Node* make_lower_bound(Node* p, const KeyType &k) const {
-        while (p != nullptr && p->key < k) {
-            p = p->right;
+    Node* make_lower_bound(Node* node, const KeyType &k) const {
+        while (node != nullptr && node->key < k) {
+            node = node->right;
         }
-        if (p == nullptr)
+        if (node == nullptr) {
             return nullptr;
-        Node* s = make_lower_bound(p->left, k);
-        if (s != nullptr)
-            return s;
-        return p;
+        }
+        Node* left_search = make_lower_bound(node->left, k);
+        if (left_search != nullptr) {
+            return left_search;
+        }
+        return node;
     }
 
     Node* GetRoot() const {
@@ -366,7 +376,7 @@ private:
     }
 
     Node* root;
-    std::size_t sz;
-    Node* mn;
-    Node* mx;
+    std::size_t size;
+    Node* min;
+    Node* max;
 };
